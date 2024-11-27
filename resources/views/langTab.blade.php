@@ -83,7 +83,6 @@
                                 @endphp
                                 {!! $field->render() !!}
                             @endforeach
-                            <input type="hidden" name="{{$relationName}}[{{ $language_index }}][loc]" value ="{{ $language_index }}">
                         </div>
                     @endforeach
 
@@ -102,7 +101,6 @@
                             {!! $field->render() !!}
                         @endforeach
 
-                        <input type="hidden" name="{{$relationName}}[{{ $locale }}][loc]" value ="{{ $locale }}">
                     </div>
                 @endif
 
