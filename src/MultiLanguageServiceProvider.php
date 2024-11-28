@@ -30,13 +30,7 @@ class MultiLanguageServiceProvider extends ServiceProvider
         }
 
         Admin::booting(function () {
-            //Form::forget(['hasMany']);
             Form::extend('langTab', LangTab::class);
-            //Form::extend('hasMany', HasMany::class);
-        });
-
-        $this->app->booted(function () {
-            MultiLanguage::routes(__DIR__.'/../routes/web.php');
         });
     }
 }

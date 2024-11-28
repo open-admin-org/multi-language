@@ -154,6 +154,11 @@ class LangTab extends HasMany
             $form->setKey($langKey);
         }
 
+        $setForeignKey = $this->maybeNeedsForeignKey($this->relationPath);
+        if ($setForeignKey) {
+            $form->setForeignKey($setForeignKey);
+        }
+
         $form->setForm($this->form);
 
         call_user_func($builder, $form);
