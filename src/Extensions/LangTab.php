@@ -23,6 +23,13 @@ class LangTab extends HasMany
     protected $builder = null;
 
     /**
+     * cache foreignKey.
+     *
+     * @var string
+     */
+    protected $foreignKey = null;
+
+    /**
      * Locales.
      *
      * @var array
@@ -55,6 +62,7 @@ class LangTab extends HasMany
     public function __construct($column, $arguments = [], $relationPath = '')
     {
         $this->locales = config('translatable.locales');
+
         parent::__construct($column, $arguments, $relationPath);
     }
 
@@ -188,9 +196,11 @@ class LangTab extends HasMany
             $relationModelName = explode('.', $this->relationPath)[0];
             $model             = $this->form->model()->{$relationModelName}()->getRelated();
             $relationName      = 'translations';
+            $fieldPath         = $relationModelName.'.'.$this->parentId.'.'.$relationName;
         } else {
             $relationName = $this->relationName;
             $model        = $this->form->model();
+            $fieldPath    = $this->column;
         }
 
         $relation = call_user_func([$model, $relationName]);
@@ -208,9 +218,19 @@ class LangTab extends HasMany
          *
          * Else get data from database.
          */
-        if ($values = old($this->column)) {
+
+        if ($values = old($fieldPath)) {
             foreach ($values as $data) {
+                $data = $this->fixParentId($data);
+
                 $key = Arr::get($data, 'locale');
+                if ($key == NestedForm::PARENT_KEY_NAME || $key == NestedForm::NEW_KEY_NAME.NestedForm::DEFAULT_KEY_NAME) {
+                    continue;
+                }
+
+                if (isset($data[NestedForm::REMOVE_FLAG_NAME]) && $data[NestedForm::REMOVE_FLAG_NAME] == 1) {
+                    continue;
+                }
 
                 $model = $relation->getRelated()->replicate()->forceFill($data);
 
@@ -221,11 +241,10 @@ class LangTab extends HasMany
             if (empty($this->value)) {
                 return [];
             }
-            $values = $this->checkLocals($this->value, $model);
+            $values = $this->checkLocals($this->value);
 
             foreach ($values as $data) {
-                $key = Arr::get($data, 'locale');
-
+                $key   = Arr::get($data, 'locale');
                 $model = $relation->getRelated()->replicate()->forceFill($data);
 
                 $forms[$key] = $this->buildNestedForm($this->column, $this->builder, $model, $key)
@@ -236,13 +255,31 @@ class LangTab extends HasMany
         return $forms;
     }
 
+    public function fixParentId($data)
+    {
+        $foreignKey = $this->getForeignKey();
+        if (empty($data[$foreignKey])) {
+            $data[$foreignKey] = $this->parentId;
+        }
+
+        return $data;
+    }
+
+    public function getForeignKey()
+    {
+        if (!$this->foreignKey) {
+            $emptyForm        = $this->buildNestedForm($this->column, $this->builder);
+            $this->foreignKey = $emptyForm->getForeignKey();
+        }
+
+        return $this->foreignKey;
+    }
+
     public function checkLocals($values)
     {
-        $emptyForm  = $this->buildNestedForm($this->column, $this->builder);
-        $foreignKey = $emptyForm->getForeignKey();
-
-        $locales = Arr::flatten(config('translatable.locales'));
-        $found   = [];
+        $foreignKey = $this->getForeignKey();
+        $locales    = Arr::flatten(config('translatable.locales'));
+        $found      = [];
         foreach ($values as $row) {
             $found[] = $row['locale'];
         }
