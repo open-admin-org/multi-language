@@ -257,9 +257,11 @@ class LangTab extends HasMany
 
     public function fixParentId($data)
     {
-        $foreignKey = $this->getForeignKey();
-        if (empty($data[$foreignKey])) {
-            $data[$foreignKey] = $this->parentId;
+        if ($this->parentId) {
+            $foreignKey = $this->getForeignKey();
+            if (empty($data[$foreignKey])) {
+                $data[$foreignKey] = $this->parentId;
+            }
         }
 
         return $data;
