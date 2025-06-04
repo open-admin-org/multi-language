@@ -252,6 +252,19 @@ class LangTab extends HasMany
             }
         }
 
+        $forms = $this->sortFormsByLocale($forms);
+
+        return $forms;
+    }
+
+    public function sortFormsByLocale($forms)
+    {
+        uksort($forms, function ($a, $b) {
+            $locales = $this->locales;
+            $posA = array_search($a, $locales);
+            $posB = array_search($b, $locales);
+            return $posA - $posB;
+        });
         return $forms;
     }
 
