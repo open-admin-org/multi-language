@@ -286,9 +286,13 @@ class LangTab extends HasMany
             $found[] = $row['locale'];
         }
         $diff = array_diff($locales, $found);
+
         foreach ($diff as $missing) {
-            //=> $this->parentId
-            $values[] = ['locale' => $missing, $foreignKey => $this->parentId];
+            $add = ['locale' => $missing];
+            if (!empty($foreignKey) && !empty($this->parentId)) {
+                $add[$foreignKey] = $this->parentId;
+            }
+            $values[] = $add;
         }
 
         return $values;
@@ -309,6 +313,7 @@ class LangTab extends HasMany
      */
     public function render()
     {
+
         $builder = $this->buildNestedForm($this->column, $this->builder);
 
         $template_fields         = [];
