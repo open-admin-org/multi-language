@@ -252,6 +252,19 @@ class LangTab extends HasMany
             }
         }
 
+        $forms = $this->sortFormsByLocale($forms);
+
+        return $forms;
+    }
+
+    public function sortFormsByLocale($forms)
+    {
+        uksort($forms, function ($a, $b) {
+            $locales = $this->locales;
+            $posA = array_search($a, $locales);
+            $posB = array_search($b, $locales);
+            return $posA - $posB;
+        });
         return $forms;
     }
 
@@ -286,9 +299,13 @@ class LangTab extends HasMany
             $found[] = $row['locale'];
         }
         $diff = array_diff($locales, $found);
+
         foreach ($diff as $missing) {
-            //=> $this->parentId
-            $values[] = ['locale' => $missing, $foreignKey => $this->parentId];
+            $add = ['locale' => $missing];
+            if (!empty($foreignKey) && !empty($this->parentId)) {
+                $add[$foreignKey] = $this->parentId;
+            }
+            $values[] = $add;
         }
 
         return $values;
@@ -309,6 +326,7 @@ class LangTab extends HasMany
      */
     public function render()
     {
+
         $builder = $this->buildNestedForm($this->column, $this->builder);
 
         $template_fields         = [];
